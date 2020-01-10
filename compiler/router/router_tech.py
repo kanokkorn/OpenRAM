@@ -1,16 +1,16 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-from tech import drc,layer
+from tech import drc, layer
 from contact import contact
-from pin_group import pin_group
 from vector import vector
 import debug
 import math
+
 
 class router_tech:
     """
@@ -24,32 +24,34 @@ class router_tech:
         """
         self.layers = layers
         self.rail_track_width = rail_track_width
-        
-        (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
-        # This is the minimum routed track spacing
-        via_connect = contact(self.layers, (1, 1))
-        max_via_size = max(via_connect.width,via_connect.height)
 
-        self.horiz_layer_number = layer[self.horiz_layer_name]
-        self.vert_layer_number = layer[self.vert_layer_name]
-        
-        if self.rail_track_width>1:
+        if len(self.layers) == 1:
+            self.horiz_layer_name = self.vert_layer_name = self.layers[0]
+            self.horiz_lpp = self.vert_lpp = layer[self.layers[0]]
+            
             (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_supply_layer_width_space(1)
             (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_supply_layer_width_space(0)
+            
+            self.horiz_track_width = self.horiz_layer_minwidth + self.horiz_layer_spacing
+            self.vert_track_width = self.vert_layer_minwidth + self.vert_layer_spacing
+        else:
+            (self.horiz_layer_name, self.via_layer_name, self.vert_layer_name) = self.layers
 
+            via_connect = contact(self.layers, (1, 1))
+            max_via_size = max(via_connect.width,via_connect.height)
+
+            self.horiz_lpp = layer[self.horiz_layer_name]
+            self.vert_lpp = layer[self.vert_layer_name]
+        
+            (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_supply_layer_width_space(1)
+            (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_supply_layer_width_space(0)
+            
             # For supplies, we will make the wire wider than the vias
             self.vert_layer_minwidth = max(self.vert_layer_minwidth, max_via_size)
             self.horiz_layer_minwidth = max(self.horiz_layer_minwidth, max_via_size)
             
             self.horiz_track_width = self.horiz_layer_minwidth + self.horiz_layer_spacing
             self.vert_track_width = self.vert_layer_minwidth + self.vert_layer_spacing
-            
-        else:
-            (self.vert_layer_minwidth, self.vert_layer_spacing) = self.get_layer_width_space(1)
-            (self.horiz_layer_minwidth, self.horiz_layer_spacing) = self.get_layer_width_space(0)
-            
-            self.horiz_track_width = max_via_size + self.horiz_layer_spacing
-            self.vert_track_width = max_via_size + self.vert_layer_spacing
             
         # We'll keep horizontal and vertical tracks the same for simplicity.
         self.track_width = max(self.horiz_track_width,self.vert_track_width)
@@ -66,8 +68,18 @@ class router_tech:
         # When we actually create the routes, make them the width of the track (minus 1/2 spacing on each side)
         self.layer_widths = [self.track_wire, 1, self.track_wire]
         
-    def get_zindex(self,layer_num):
-        if layer_num==self.horiz_layer_number:
+    def same_lpp(self, lpp1, lpp2):
+        """
+        Check if the layers and purposes are the same.
+        Ignore if purpose is a None.
+        """
+        if lpp1[1] == None or lpp2[1] == None:
+            return lpp1[0] == lpp2[0]
+        
+        return lpp1[0] == lpp2[0] and lpp1[1] == lpp2[1]
+
+    def get_zindex(self, lpp):
+        if self.same_lpp(lpp, self.horiz_lpp):
             return 0
         else:
             return 1
@@ -79,24 +91,6 @@ class router_tech:
             return self.horiz_layer_name
         else:
             debug.error("Invalid zindex {}".format(zindex),-1)
-
-    def get_layer_width_space(self, zindex, width=0, length=0):
-        """
-        Return the width and spacing of a given layer
-        and wire of a given width and length.
-        """
-        if zindex==1:
-            layer_name = self.vert_layer_name
-        elif zindex==0:
-            layer_name = self.horiz_layer_name
-        else:
-            debug.error("Invalid zindex for track", -1)
-
-        min_width = drc("minwidth_{0}".format(layer_name), width, length)
-        min_spacing = drc(str(layer_name)+"_to_"+str(layer_name), width, length)
-
-        return (min_width,min_spacing)
-
 
     def get_supply_layer_width_space(self, zindex):
         """

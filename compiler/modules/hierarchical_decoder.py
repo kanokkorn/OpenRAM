@@ -1,15 +1,16 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 from tech import drc
 import debug
 import design
 from math import log
 from math import sqrt
+from math import ceil
 import math
 import contact
 from sram_factory import factory
@@ -31,7 +32,7 @@ class hierarchical_decoder(design.design):
 
         self.cell_height = height        
         self.rows = rows
-        self.num_inputs = int(math.log(self.rows, 2))
+        self.num_inputs = math.ceil(math.log(self.rows, 2))
         (self.no_of_pre2x4,self.no_of_pre3x8)=self.determine_predecodes(self.num_inputs)
 
         self.create_netlist()
@@ -54,6 +55,7 @@ class hierarchical_decoder(design.design):
         self.route_predecode_rails()
         self.route_vdd_gnd()
         self.offset_all_coordinates()
+        self.add_boundary()
         self.DRC_LVS()
                 
     def add_modules(self):
@@ -230,12 +232,12 @@ class hierarchical_decoder(design.design):
         """ Add the module pins """
         
         for i in range(self.num_inputs):
-            self.add_pin("addr_{0}".format(i))
+            self.add_pin("addr_{0}".format(i), "INPUT")
 
         for j in range(self.rows):
-            self.add_pin("decode_{0}".format(j))
-        self.add_pin("vdd")
-        self.add_pin("gnd")
+            self.add_pin("decode_{0}".format(j), "OUTPUT")
+        self.add_pin("vdd", "POWER")
+        self.add_pin("gnd", "GROUND")
 
 
     def create_pre_decoder(self):
@@ -337,14 +339,15 @@ class hierarchical_decoder(design.design):
             for i in range(len(self.predec_groups[0])):
                 for j in range(len(self.predec_groups[1])):
                     row = len(self.predec_groups[0])*j + i
-                    name = self.NAND_FORMAT.format(row)
-                    self.nand_inst.append(self.add_inst(name=name,
-                                                        mod=self.nand2))
-                    pins =["out_{0}".format(i),
-                           "out_{0}".format(j + len(self.predec_groups[0])),
-                           "Z_{0}".format(row),
-                           "vdd", "gnd"]
-                    self.connect_inst(pins)
+                    if (row < self.rows):
+                        name = self.NAND_FORMAT.format(row)
+                        self.nand_inst.append(self.add_inst(name=name,
+                                                            mod=self.nand2))
+                        pins =["out_{0}".format(i),
+                               "out_{0}".format(j + len(self.predec_groups[0])),
+                               "Z_{0}".format(row),
+                               "vdd", "gnd"]
+                        self.connect_inst(pins)
 
 
         # Row Decoder NAND GATE array for address inputs >5.
@@ -355,16 +358,17 @@ class hierarchical_decoder(design.design):
                         row = (len(self.predec_groups[0])*len(self.predec_groups[1])) * k \
                             + len(self.predec_groups[0])*j + i
 
-                        name = self.NAND_FORMAT.format(row)
-                        self.nand_inst.append(self.add_inst(name=name,
-                                                            mod=self.nand3))
+                        if (row < self.rows):
+                            name = self.NAND_FORMAT.format(row)
+                            self.nand_inst.append(self.add_inst(name=name,
+                                                                mod=self.nand3))
                         
-                        pins = ["out_{0}".format(i),
-                                "out_{0}".format(j + len(self.predec_groups[0])),
-                                "out_{0}".format(k + len(self.predec_groups[0]) + len(self.predec_groups[1])),
-                                "Z_{0}".format(row),
-                                "vdd", "gnd"]
-                        self.connect_inst(pins)
+                            pins = ["out_{0}".format(i),
+                                    "out_{0}".format(j + len(self.predec_groups[0])),
+                                    "out_{0}".format(k + len(self.predec_groups[0]) + len(self.predec_groups[1])),
+                                    "Z_{0}".format(row),
+                                    "vdd", "gnd"]
+                            self.connect_inst(pins)
 
 
     def create_decoder_inv_array(self):
@@ -526,10 +530,11 @@ class hierarchical_decoder(design.design):
             for index_B in self.predec_groups[1]:
                 for index_A in self.predec_groups[0]:
                     # FIXME: convert to connect_bus?
-                    predecode_name = "predecode_{}".format(index_A)
-                    self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
-                    predecode_name = "predecode_{}".format(index_B)                    
-                    self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
+                    if (row_index < self.rows):
+                        predecode_name = "predecode_{}".format(index_A)
+                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
+                        predecode_name = "predecode_{}".format(index_B)                    
+                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
                     row_index = row_index + 1
 
         elif (self.num_inputs > 5):
@@ -537,12 +542,13 @@ class hierarchical_decoder(design.design):
                 for index_B in self.predec_groups[1]:
                     for index_A in self.predec_groups[0]:
                         # FIXME: convert to connect_bus?
-                        predecode_name = "predecode_{}".format(index_A) 
-                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
-                        predecode_name = "predecode_{}".format(index_B) 
-                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
-                        predecode_name = "predecode_{}".format(index_C) 
-                        self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("C"))
+                        if (row_index < self.rows):
+                            predecode_name = "predecode_{}".format(index_A) 
+                            self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("A"))
+                            predecode_name = "predecode_{}".format(index_B) 
+                            self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("B"))
+                            predecode_name = "predecode_{}".format(index_C) 
+                            self.route_predecode_rail(predecode_name, self.nand_inst[row_index].get_pin("C"))
                         row_index = row_index + 1
 
     def route_vdd_gnd(self):
@@ -595,31 +601,10 @@ class hierarchical_decoder(design.design):
         self.add_via_center(layers=("metal2", "via2", "metal3"),
                             offset=rail_pos)
 
-        
-    def analytical_delay(self, corner, slew, load = 0.0):
-        # A -> out
-        if self.determine_predecodes(self.num_inputs)[1]==0:
-            pre = self.pre2_4
-            nand = self.nand2
-        else:
-            pre = self.pre3_8
-            nand = self.nand3
-        a_t_out_delay = pre.analytical_delay(corner, slew=slew,load = nand.input_load())
-
-        # out -> z
-        out_t_z_delay = nand.analytical_delay(corner, slew= a_t_out_delay.slew,
-                                  load = self.inv.input_load())
-        result = a_t_out_delay + out_t_z_delay
-
-        # Z -> decode_out
-        z_t_decodeout_delay = self.inv.analytical_delay(corner, slew = out_t_z_delay.slew , load = load)
-        result = result + z_t_decodeout_delay
-        return result
-
-        
     def input_load(self):
         if self.determine_predecodes(self.num_inputs)[1]==0:
             pre = self.pre2_4
         else:
             pre = self.pre3_8
         return pre.input_load()
+        

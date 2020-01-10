@@ -1,27 +1,25 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-"""
-Check the .lib file for an SRAM with pruning
-"""
-
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os,re
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 import debug
 
-class lib_test(openram_test):
+@unittest.skip("SKIPPING 23_lib_sram_prune_test")
+class lib_sram_prune_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         OPTS.analytical_delay = False
         OPTS.trim_netlist = True
 
@@ -71,7 +69,7 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())
 
 
 

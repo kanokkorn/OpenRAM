@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os
 from design_rules import *
@@ -35,39 +35,38 @@ GDS["zoom"] = 0.05
 # create the GDS layer map
 # FIXME: parse the gds layer map from the cadence map?
 layer = {}
-layer["active"]  = 1
-layer["pwell"]   = 2
-layer["nwell"]   = 3
-layer["nimplant"]= 4
-layer["pimplant"]= 5
-layer["vtg"]     = 6
-layer["vth"]     = 7
-layer["thkox"]   = 8
-layer["poly"]    = 9
-layer["contact"] = 10
-layer["active_contact"] = 10
-layer["metal1"]  = 11
-layer["via1"]    = 12
-layer["metal2"]  = 13
-layer["via2"]    = 14
-layer["metal3"]  = 15
-layer["via3"]    = 16
-layer["metal4"]  = 17
-layer["via4"]    = 18
-layer["metal5"]  = 19
-layer["via5"]    = 20
-layer["metal6"]  = 21
-layer["via6"]    = 22
-layer["metal7"]  = 23
-layer["via7"]    = 24
-layer["metal8"]  = 25
-layer["via8"]    = 26
-layer["metal9"]  = 27
-layer["via9"]    = 28
-layer["metal10"] = 29
-layer["text"]    = 239
-layer["boundary"]= 239
-layer["blockage"]= 239
+layer["active"]  = (1, 0)
+layer["pwell"]   = (2, 0)
+layer["nwell"]   = (3, 0)
+layer["nimplant"]= (4, 0)
+layer["pimplant"]= (5, 0)
+layer["vtg"]     = (6, 0)
+layer["vth"]     = (7, 0)
+layer["thkox"]   = (8, 0)
+layer["poly"]    = (9, 0)
+layer["contact"] = (10, 0)
+layer["active_contact"] = (10, 0)
+layer["metal1"]  = (11, 0)
+layer["via1"]    = (12, 0)
+layer["metal2"]  = (13, 0)
+layer["via2"]    = (14, 0)
+layer["metal3"]  = (15, 0)
+layer["via3"]    = (16, 0)
+layer["metal4"]  = (17, 0)
+layer["via4"]    = (18, 0)
+layer["metal5"]  = (19, 0)
+layer["via5"]    = (20, 0)
+layer["metal6"]  = (21, 0)
+layer["via6"]    = (22, 0)
+layer["metal7"]  = (23, 0)
+layer["via7"]    = (24, 0)
+layer["metal8"]  = (25, 0)
+layer["via8"]    = (26, 0)
+layer["metal9"]  = (27, 0)
+layer["via9"]    = (28, 0)
+layer["metal10"] = (29, 0)
+layer["text"]    = (239, 0)
+layer["boundary"]= (239, 0)
 
 ###################################################
 ##END GDS Layer Map
@@ -303,37 +302,16 @@ spice["fall_time"] = 0.005           # fall time in [Nano-seconds]
 spice["temperatures"] = [0, 25, 100] # Temperature corners (celcius)
 spice["nom_temperature"] = 25        # Nominal temperature (celcius)
 
-
-#sram signal names
-#FIXME: We don't use these everywhere...
-spice["vdd_name"] = "vdd"
-spice["gnd_name"] = "gnd"
-spice["control_signals"] = ["CSB", "WEB"]
-spice["data_name"] = "DATA"
-spice["addr_name"] = "ADDR"
-spice["minwidth_tx"] = drc["minwidth_tx"]
-spice["channel"] = drc["minlength_channel"]
-spice["clk"] = "clk"
-
 # analytical delay parameters
-spice["vdd_nominal"] = 1.0    # Typical Threshold voltage in Volts
-spice["temp_nominal"] = 25.0   # Typical Threshold voltage in Volts
-spice["v_threshold_typical"] = 0.4    # Typical Threshold voltage in Volts
+spice["nom_threshold"] = 0.4    # Typical Threshold voltage in Volts
 spice["wire_unit_r"] = 0.075     # Unit wire resistance in ohms/square
 spice["wire_unit_c"] = 0.64      # Unit wire capacitance ff/um^2
-spice["min_tx_r"] = 9250.0       # Minimum transistor on resistance in ohms
 spice["min_tx_drain_c"] = 0.7    # Minimum transistor drain capacitance in ff
 spice["min_tx_gate_c"] = 0.2     # Minimum transistor gate capacitance in ff
-spice["msflop_setup"] = 9        # DFF setup time in ps
-spice["msflop_hold"] = 1         # DFF hold time in ps
-spice["msflop_delay"] = 20.5     # DFF Clk-to-q delay in ps
-spice["msflop_slew"] = 13.1      # DFF output slew in ps w/ no load
-spice["msflop_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
 spice["dff_setup"] = 9        # DFF setup time in ps
 spice["dff_hold"] = 1         # DFF hold time in ps
-spice["dff_delay"] = 20.5     # DFF Clk-to-q delay in ps
-spice["dff_slew"] = 13.1      # DFF output slew in ps w/ no load
-spice["dff_in_cap"] = 0.2091  # Input capacitance of ms_flop (Din) [Femto-farad]
+spice["dff_in_cap"] = 0.2091  # Input capacitance (D) [Femto-farad]
+spice["dff_out_cap"] = 2       # Output capacitance (Q) [Femto-farad]
 
 # analytical power parameters, many values are temporary
 spice["bitcell_leakage"] = 1     # Leakage power of a single bitcell in nW
@@ -341,31 +319,21 @@ spice["inv_leakage"] = 1         # Leakage power of inverter in nW
 spice["nand2_leakage"] = 1       # Leakage power of 2-input nand in nW
 spice["nand3_leakage"] = 1       # Leakage power of 3-input nand in nW
 spice["nor2_leakage"] = 1        # Leakage power of 2-input nor in nW
-spice["msflop_leakage"] = 1      # Leakage power of flop in nW
-spice["flop_para_cap"] = 2       # Parasitic Output capacitance in fF
+spice["dff_leakage"] = 1      # Leakage power of flop in nW
 
-spice["default_event_rate"] = 100           # Default event activity of every gate. MHz
-spice["flop_transition_prob"] = .5        # Transition probability of inverter.
-spice["inv_transition_prob"] = .5         # Transition probability of inverter.
-spice["nand2_transition_prob"] = .1875    # Transition probability of 2-input nand.
-spice["nand3_transition_prob"] = .1094    # Transition probability of 3-input nand.
-spice["nor2_transition_prob"] = .1875     # Transition probability of 2-input nor.
+spice["default_event_frequency"] = 100     # Default event activity of every gate. MHz
 
 #Parameters related to sense amp enable timing and delay chain/RBL sizing
-parameter['le_tau'] = 2.25                  #In pico-seconds.
-parameter['cap_relative_per_ff'] = 7.5      #Units of Relative Capacitance/ Femto-Farad
-parameter["static_delay_stages"] = 4
-parameter["static_fanout_per_stage"] = 3
-parameter["static_fanout_list"] = parameter["static_delay_stages"]*[parameter["static_fanout_per_stage"]]
+parameter["le_tau"] = 2.25                  #In pico-seconds.
+parameter["cap_relative_per_ff"] = 7.5      #Units of Relative Capacitance/ Femto-Farad
 parameter["dff_clk_cin"] = 30.6             #relative capacitance
 parameter["6tcell_wl_cin"] = 3              #relative capacitance
 parameter["min_inv_para_delay"] = 2.4        #Tau delay units
-parameter["sa_en_pmos_size"] = .72          #micro-meters
-parameter["sa_en_nmos_size"] = .27          #micro-meters
-parameter["sa_inv_pmos_size"] = .54          #micro-meters
-parameter["sa_inv_nmos_size"] = .27          #micro-meters
-parameter["rbl_height_percentage"] = .5     #Height of RBL compared to bitcell array 
-parameter['bitcell_drain_cap'] = 0.1        #In Femto-Farad, approximation of drain capacitance
+parameter["sa_en_pmos_size"] = 0.72          #micro-meters
+parameter["sa_en_nmos_size"] = 0.27          #micro-meters
+parameter["sa_inv_pmos_size"] = 0.54          #micro-meters
+parameter["sa_inv_nmos_size"] = 0.27          #micro-meters
+parameter["bitcell_drain_cap"] = 0.1        #In Femto-Farad, approximation of drain capacitance
 
 ###################################################
 ##END Spice Simulation Parameters

@@ -1,19 +1,15 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-"""
-Run a regression test on various srams
-"""
-
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
@@ -22,7 +18,8 @@ import debug
 class timing_setup_test(openram_test):
 
     def runTest(self):
-        globals.init_openram("config_{0}".format(OPTS.tech_name))
+        config_file = "{}/tests/configs/config".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
         OPTS.spice_name="ngspice"
         OPTS.analytical_delay = False
         OPTS.netlist_only = True
@@ -46,10 +43,10 @@ class timing_setup_test(openram_test):
                            'setup_times_HL': [0.02685547],
                            'setup_times_LH': [0.03295898]}
         elif OPTS.tech_name == "scn4m_subm":
-            golden_data = {'hold_times_HL': [-0.08911132999999999],
-                            'hold_times_LH': [-0.0769043],
-                            'setup_times_HL': [0.1184082],
-                            'setup_times_LH': [0.1672363]}
+            golden_data = {'hold_times_HL': [-0.08056640999999999],
+                           'hold_times_LH': [-0.1293945],
+                           'setup_times_HL': [0.1757812],
+                           'setup_times_LH': [0.1879883]}
         else:
             self.assertTrue(False) # other techs fail
 
@@ -66,4 +63,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

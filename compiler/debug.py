@@ -1,9 +1,9 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import os
 import inspect
@@ -26,6 +26,9 @@ def check(check, str):
         log("ERROR: file {0}: line {1}: {2}\n".format(
             os.path.basename(filename), line_number, str))
 
+        if globals.OPTS.debug_level > 0:
+            import pdb
+            pdb.set_trace()
         assert 0
 
 
@@ -37,6 +40,9 @@ def error(str, return_value=0):
     log("ERROR: file {0}: line {1}: {2}\n".format(
         os.path.basename(filename), line_number, str))
 
+    if globals.OPTS.debug_level > 0:
+        import pdb
+        pdb.set_trace()
     assert return_value == 0
 
 
@@ -85,7 +91,7 @@ def log(str):
 
 # use a static list of strings to store messages until the global paths are set up
 log.setup_output = []
-log.create_file = 1
+log.create_file = True
 
 
 def info(lev, str):
@@ -94,7 +100,7 @@ def info(lev, str):
         frm = inspect.stack()[1]
         mod = inspect.getmodule(frm[0])
         # classname = frm.f_globals['__name__']
-        if mod.__name__ == None:
+        if mod.__name__ is None:
             class_name = ""
         else:
             class_name = mod.__name__

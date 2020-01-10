@@ -1,32 +1,27 @@
 #!/usr/bin/env python3
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
-"""
-This tests the top-level executable. It checks that it generates the
-appropriate files: .lef, .lib, .sp, .gds, .v. It DOES NOT, however,
-check that these files are right.
-"""
-
 import unittest
-from testutils import header,openram_test
+from testutils import *
 import sys,os,re,shutil
-sys.path.append(os.path.join(sys.path[0],".."))
+sys.path.append(os.getenv("OPENRAM_HOME"))
 import globals
 from globals import OPTS
 from sram_factory import factory
 import debug
 import getpass
 
-class openram_test(openram_test):
+class openram_back_end_test(openram_test):
 
     def runTest(self):
         OPENRAM_HOME = os.path.abspath(os.environ.get("OPENRAM_HOME"))
-        globals.init_openram("{0}/tests/config_{1}".format(OPENRAM_HOME,OPTS.tech_name))
+        config_file = "{}/tests/configs/config_back_end".format(os.getenv("OPENRAM_HOME"))
+        globals.init_openram(config_file)
 
         debug.info(1, "Testing top-level back-end openram.py with 2-bit, 16 word SRAM.")
         out_file = "testsram"
@@ -44,9 +39,12 @@ class openram_test(openram_test):
                 os.chmod(out_path, 0o0750)
 
         # specify the same verbosity for the system call
-        verbosity = ""
+        options = ""
         for i in range(OPTS.debug_level):
-            verbosity += " -v"
+            options += " -v"
+
+        if OPTS.spice_name:
+            options += " -s {}".format(OPTS.spice_name)
             
         # Always perform code coverage
         if OPTS.coverage == 0:
@@ -54,11 +52,11 @@ class openram_test(openram_test):
             exe_name = "{0}/openram.py ".format(OPENRAM_HOME)
         else:
             exe_name = "coverage run -p {0}/openram.py ".format(OPENRAM_HOME) 
-        config_name = "{0}config_{1}_back_end.py".format(OPENRAM_HOME + "/tests/",OPTS.tech_name)
+        config_name = "{0}/tests/configs/config_back_end.py".format(OPENRAM_HOME)
         cmd = "{0} -n -o {1} -p {2} {3} {4} 2>&1 > {5}/output.log".format(exe_name,
                                                                           out_file,
                                                                           out_path,
-                                                                          verbosity,
+                                                                          options,
                                                                           config_name,
                                                                           out_path)
         debug.info(1, cmd)
@@ -89,10 +87,11 @@ class openram_test(openram_test):
 
 
         # now clean up the directory
-        if os.path.exists(out_path):
-            shutil.rmtree(out_path, ignore_errors=True)
-        self.assertEqual(os.path.exists(out_path),False)
-
+        if OPTS.purge_temp:
+            if os.path.exists(out_path):
+                shutil.rmtree(out_path, ignore_errors=True)
+            self.assertEqual(os.path.exists(out_path),False)
+ 
         globals.end_openram()
 
 # run the test from the command line
@@ -100,4 +99,4 @@ if __name__ == "__main__":
     (OPTS, args) = globals.parse_args()
     del sys.argv[1:]
     header(__file__, OPTS.tech_name)
-    unittest.main()
+    unittest.main(testRunner=debugTestRunner())

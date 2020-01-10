@@ -1,17 +1,18 @@
 # See LICENSE for licensing information.
 #
-#Copyright (c) 2016-2019 Regents of the University of California and The Board
-#of Regents for the Oklahoma Agricultural and Mechanical College
-#(acting for and on behalf of Oklahoma State University)
-#All rights reserved.
+# Copyright (c) 2016-2019 Regents of the University of California and The Board
+# of Regents for the Oklahoma Agricultural and Mechanical College
+# (acting for and on behalf of Oklahoma State University)
+# All rights reserved.
 #
 import optparse
-import getpass 
+import getpass
 import os
 
 class options(optparse.Values):
     """
-    Class for holding all of the OpenRAM options. All of these options can be over-riden in a configuration file
+    Class for holding all of the OpenRAM options. All
+    of these options can be over-riden in a configuration file
     that is the sole required command-line positional argument for openram.py.
     """
 
@@ -28,6 +29,9 @@ class options(optparse.Values):
     num_rw_ports = 1
     num_r_ports = 0
     num_w_ports = 0
+
+    # Write mask size, default will be overwritten with word_size if not user specified
+    write_size = None
     
     # These will get initialized by the user or the tech file
     supply_voltages = ""
@@ -35,17 +39,23 @@ class options(optparse.Values):
     process_corners = ""
 
     # Size parameters must be specified by user in config file.
-    #num_words = 0
-    #word_size = 0
+    # num_words = 0
+    # word_size = 0
     # You can manually specify banks, but it is better to auto-detect it.
     num_banks = 1
 
     ###################
     # Optimization options
-    ###################    
-    # Uses the delay chain size in the tech.py file rather automatic sizing.
+    ###################
+    # Approximate percentage of delay compared to bitlines
+    rbl_delay_percentage = 0.5
+    
+    # Allow manual adjustment of the delay chain over automatic
     use_tech_delay_chain_size = False
-
+    delay_chain_stages = 9
+    delay_chain_fanout_per_stage = 4
+    
+    
 
     ###################
     # Debug options.
@@ -56,7 +66,8 @@ class options(optparse.Values):
         openram_temp = os.path.abspath(os.environ.get("OPENRAM_TMP"))
     except:
         # Else use a unique temporary directory
-        openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),os.getpid())
+        openram_temp = "/tmp/openram_{0}_{1}_temp/".format(getpass.getuser(),
+                                                           os.getpid())
     # This is the verbosity level to control debug information. 0 is none, 1
     # is minimal, etc.
     debug_level = 0
@@ -75,7 +86,7 @@ class options(optparse.Values):
     # This determines whether LVS and DRC is checked for every submodule.
     inline_lvsdrc = False
     # Remove noncritical memory cells for characterization speed-up
-    trim_netlist = True
+    trim_netlist = False
     # Run with extracted parasitics
     use_pex = False
 
@@ -91,7 +102,8 @@ class options(optparse.Values):
     drc_name = ""
     lvs_name = ""
     pex_name = ""
-    # The DRC/LVS/PEX executable being used which is derived from the user PATH.
+    # The DRC/LVS/PEX executable being used
+    # which is derived from the user PATH.
     drc_exe = None
     lvs_exe = None
     pex_exe = None
@@ -104,15 +116,14 @@ class options(optparse.Values):
     output_path = "."
     # Define the output file base name
     output_name = ""
-    # Use analytical delay models by default rather than (slow) characterization
+    # Use analytical delay models by default
+    # rather than (slow) characterization
     analytical_delay = True
-    # Purge the temp directory after a successful run (doesn't purge on errors, anyhow)
+    # Purge the temp directory after a successful
+    # run (doesn't purge on errors, anyhow)
     purge_temp = True
 
-
-    ###################    
     # These are the default modules that can be over-riden
-    ###################    
     bank_select = "bank_select"
     bitcell_array = "bitcell_array"
     bitcell = "bitcell"
@@ -122,6 +133,7 @@ class options(optparse.Values):
     delay_chain = "delay_chain"
     dff_array = "dff_array"
     dff = "dff"
+    dummy_bitcell = "dummy_bitcell"
     precharge_array = "precharge_array"
     ptx = "ptx"
     replica_bitcell = "replica_bitcell"
@@ -133,4 +145,5 @@ class options(optparse.Values):
     wordline_driver = "wordline_driver"
     write_driver_array = "write_driver_array"
     write_driver = "write_driver"
+    write_mask_and_array = "write_mask_and_array"
 
